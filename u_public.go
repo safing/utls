@@ -252,7 +252,6 @@ type ServerHelloMsg struct {
 	SelectedIdentity        uint16
 	Cookie                  []byte  // HelloRetryRequest extension
 	SelectedGroup           CurveID // HelloRetryRequest extension
-
 }
 
 func (shm *ServerHelloMsg) getPrivatePtr() *serverHelloMsg {
@@ -313,6 +312,16 @@ func (shm *serverHelloMsg) getPublicPtr() *ServerHelloMsg {
 			SelectedGroup:                shm.selectedGroup,
 		}
 	}
+}
+
+// UnmarshalServerHello allows external code to parse raw client hellos.
+// It returns nil on failure.
+func UnmarshalServerHello(data []byte) *ServerHelloMsg {
+	m := &serverHelloMsg{}
+	if m.unmarshal(data) {
+		return m.getPublicPtr()
+	}
+	return nil
 }
 
 type ClientHelloMsg struct {
@@ -425,6 +434,82 @@ func (chm *clientHelloMsg) getPublicPtr() *ClientHelloMsg {
 // It returns nil on failure.
 func UnmarshalClientHello(data []byte) *ClientHelloMsg {
 	m := &clientHelloMsg{}
+	if m.unmarshal(data) {
+		return m.getPublicPtr()
+	}
+	return nil
+}
+
+type CertificateMsg struct {
+	Raw          []byte
+	Certificates [][]byte
+}
+
+func (cm *CertificateMsg) getPrivatePtr() *certificateMsg {
+	if cm == nil {
+		return nil
+	} else {
+		return &certificateMsg{
+			raw:          cm.Raw,
+			certificates: cm.Certificates,
+		}
+	}
+}
+
+func (cm *certificateMsg) getPublicPtr() *CertificateMsg {
+	if cm == nil {
+		return nil
+	} else {
+		return &CertificateMsg{
+			Raw:          cm.raw,
+			Certificates: cm.certificates,
+		}
+	}
+}
+
+func UnmarshalCertificateMsg(data []byte) *CertificateMsg {
+	m := &certificateMsg{}
+	if m.unmarshal(data) {
+		return m.getPublicPtr()
+	}
+	return nil
+}
+
+type CertificateMsgTLS13 struct {
+	Raw          []byte
+	Certificate  Certificate
+	OcspStapling bool
+	Scts         bool
+}
+
+func (cm *CertificateMsgTLS13) getPrivatePtr() *certificateMsgTLS13 {
+	if cm == nil {
+		return nil
+	} else {
+		return &certificateMsgTLS13{
+			raw:          cm.Raw,
+			certificate:  cm.Certificate,
+			ocspStapling: cm.OcspStapling,
+			scts:         cm.Scts,
+		}
+	}
+}
+
+func (cm *certificateMsgTLS13) getPublicPtr() *CertificateMsgTLS13 {
+	if cm == nil {
+		return nil
+	} else {
+		return &CertificateMsgTLS13{
+			Raw:          cm.raw,
+			Certificate:  cm.certificate,
+			OcspStapling: cm.ocspStapling,
+			Scts:         cm.scts,
+		}
+	}
+}
+
+func UnmarshalCertificateMsgTLS13(data []byte) *CertificateMsgTLS13 {
+	m := &certificateMsgTLS13{}
 	if m.unmarshal(data) {
 		return m.getPublicPtr()
 	}
